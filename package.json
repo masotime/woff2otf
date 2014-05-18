@@ -1,0 +1,14 @@
+{
+  "name": "woff2otf",
+  "version": "0.0.0",
+  "description": "NodeJS port of hanikesn's woff2otf",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Benjamin Goh <masotime@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "bufferpack": "0.0.6"
+  }
+}
