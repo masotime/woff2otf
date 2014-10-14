@@ -1,9 +1,7 @@
 'use strict';
 
-var bufferpack = require('bufferpack'),
-	fs = require('fs'),
-	unpack = bufferpack.unpack,
-	pack = bufferpack.pack;
+var b = require('bufferpack'),
+	fs = require('fs');
 
 function largestBinaryLessThan(x) {
 	var power = 0;
@@ -48,51 +46,51 @@ var WOFFHeader = {};
 // var writeEnded = false;
 
 readStream.on('readable', function() {
-	WOFFHeader.signature = unpack('>I', readStream.read(4))[0];
-	WOFFHeader.flavor = unpack('>I', readStream.read(4))[0];
-	WOFFHeader.length = unpack('>I', readStream.read(4))[0];
-	WOFFHeader.numTables = unpack('>H', readStream.read(2))[0];
-	WOFFHeader.reserved = unpack('>H', readStream.read(2))[0];
-	WOFFHeader.totalSfntSize = unpack('>I', readStream.read(4))[0];
-	WOFFHeader.majorVersion = unpack('>H', readStream.read(2))[0];
-	WOFFHeader.minorVersion = unpack('>H', readStream.read(2))[0];
-	WOFFHeader.metaOffset = unpack('>I', readStream.read(4))[0];
-	WOFFHeader.metaLength = unpack('>I', readStream.read(4))[0];
-	WOFFHeader.metaOrigLength = unpack('>I', readStream.read(4))[0];
-	WOFFHeader.privOffset = unpack('>I', readStream.read(4))[0];
-	WOFFHeader.privLength = unpack('>I', readStream.read(4))[0];
+	WOFFHeader.signature = b.unpack('>I', readStream.read(4))[0];
+	WOFFHeader.flavor = b.unpack('>I', readStream.read(4))[0];
+	WOFFHeader.length = b.unpack('>I', readStream.read(4))[0];
+	WOFFHeader.numTables = b.unpack('>H', readStream.read(2))[0];
+	WOFFHeader.reserved = b.unpack('>H', readStream.read(2))[0];
+	WOFFHeader.totalSfntSize = b.unpack('>I', readStream.read(4))[0];
+	WOFFHeader.majorVersion = b.unpack('>H', readStream.read(2))[0];
+	WOFFHeader.minorVersion = b.unpack('>H', readStream.read(2))[0];
+	WOFFHeader.metaOffset = b.unpack('>I', readStream.read(4))[0];
+	WOFFHeader.metaLength = b.unpack('>I', readStream.read(4))[0];
+	WOFFHeader.metaOrigLength = b.unpack('>I', readStream.read(4))[0];
+	WOFFHeader.privOffset = b.unpack('>I', readStream.read(4))[0];
+	WOFFHeader.privLength = b.unpack('>I', readStream.read(4))[0];
 
 
-	writeStream.write(pack('>I', WOFFHeader.flavor));
-	writeStream.write(pack('>H', WOFFHeader.numTables));
+	writeStream.write(b.pack('>I', WOFFHeader.flavor));
+	writeStream.write(b.pack('>H', WOFFHeader.numTables));
 	var maximum = largestBinaryLessThan(WOFFHeader.numTables);
 	var searchRange = maximum[1] * 16;
-	writeStream.write(pack('>H', searchRange));
+	writeStream.write(b.pack('>H', searchRange));
 	var entrySelector = maximum[0];
-	writeStream.write(pack('>H', entrySelector));
+	writeStream.write(b.pack('>H', entrySelector));
 	var rangeShift = WOFFHeader.numTables * 16 - searchRange;
-	writeStream.write(pack('>H', rangeShift));
+	writeStream.write(b.pack('>H', rangeShift));
 
 	var offset = writeStream.tell();
 
 	var TableDirectoryEntries = [], i;
 	for (i=0; i<WOFFHeader.numTables;i+=1) {
 		var entry = {};
-		entry.tag = unpack('>I', readStream.read(4))[0];
-		entry.offset = unpack('>I', readStream.read(4))[0];
-		entry.compLength = unpack('>I', readStream.read(4))[0];
-		entry.origLength = unpack('>I', readStream.read(4))[0];
-		entry.origChecksum = unpack('>I', readStream.read(4))[0];
+		entry.tag = b.unpack('>I', readStream.read(4))[0];
+		entry.offset = b.unpack('>I', readStream.read(4))[0];
+		entry.compLength = b.unpack('>I', readStream.read(4))[0];
+		entry.origLength = b.unpack('>I', readStream.read(4))[0];
+		entry.origChecksum = b.unpack('>I', readStream.read(4))[0];
 
 		TableDirectoryEntries.push(entry);
 		offset += 4*4;
 	}
 
 	TableDirectoryEntries.forEach(function(TableDirectoryEntry) {
-		writeStream.write(pack('>I', TableDirectoryEntry.tag));
-		writeStream.write(pack('>I', TableDirectoryEntry.origChecksum));
-		writeStream.write(pack('>I', offset));
-		writeStream.write(pack('>I', TableDirectoryEntry.origLength));
+		writeStream.write(b.pack('>I', TableDirectoryEntry.tag));
+		writeStream.write(b.pack('>I', TableDirectoryEntry.origChecksum));
+		writeStream.write(b.pack('>I', offset));
+		writeStream.write(b.pack('>I', TableDirectoryEntry.origLength));
 		TableDirectoryEntry.outOffset = offset;
 		offset += TableDirectoryEntry.origLength;
 		if (offset % 4 !== 0) {
