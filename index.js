@@ -1,3 +1,5 @@
+'use strict';
+
 var bufferpack = require('bufferpack'),
 	fs = require('fs'),
 	unpack = bufferpack.unpack,
@@ -7,7 +9,7 @@ function largestBinaryLessThan(x) {
 	var power = 0;
 	while (Math.pow(2,power) < x) {
 		power+=1;
-	};
+	}
 
 	return [power-1, Math.pow(2,power-1)];
 }
@@ -27,17 +29,23 @@ function writeTracker(outstream) {
 			'end': function(data) {
 				outstream.end(data);
 			}
-		}
+		};
 	}());
+}
+
+function readBytes(fd, position, length) {
+	var buffer = new Buffer(length);
+	fs.readSync(fd, buffer, 0, length, position);
+	return buffer;
 }
 
 var infile = 'freight-sans-pro-300-normal.woff';
 var outfile = 'freight-sans-pro-300-normal.otf';
+//var fd = fs.openSync(infile, 'r');
 var readStream = fs.createReadStream(infile);
 var writeStream = writeTracker(fs.createWriteStream(outfile));
 var WOFFHeader = {};
-var writeEnded = false;
-
+// var writeEnded = false;
 
 readStream.on('readable', function() {
 	WOFFHeader.signature = unpack('>I', readStream.read(4))[0];
@@ -71,11 +79,29 @@ readStream.on('readable', function() {
 	for (i=0; i<WOFFHeader.numTables;i+=1) {
 		var entry = {};
 		entry.tag = unpack('>I', readStream.read(4))[0];
-		entry.offset = unpack('')
-		TableDirectoryEntries.push({
-			'tag': struct
-		});
+		entry.offset = unpack('>I', readStream.read(4))[0];
+		entry.compLength = unpack('>I', readStream.read(4))[0];
+		entry.origLength = unpack('>I', readStream.read(4))[0];
+		entry.origChecksum = unpack('>I', readStream.read(4))[0];
+
+		TableDirectoryEntries.push(entry);
+		offset += 4*4;
 	}
+
+	TableDirectoryEntries.forEach(function(TableDirectoryEntry) {
+		writeStream.write(pack('>I', TableDirectoryEntry.tag));
+		writeStream.write(pack('>I', TableDirectoryEntry.origChecksum));
+		writeStream.write(pack('>I', offset));
+		writeStream.write(pack('>I', TableDirectoryEntry.origLength));
+		TableDirectoryEntry.outOffset = offset;
+		offset += TableDirectoryEntry.origLength;
+		if (offset % 4 !== 0) {
+			offset += 4 - (offset % 4);
+		}
+	});
+
+	// in this nasty part, I have to "seek" by re-opening the file
+
 
 	readStream.resume();
 	writeStream.end();
